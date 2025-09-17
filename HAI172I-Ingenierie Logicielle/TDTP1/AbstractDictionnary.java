@@ -6,8 +6,9 @@ public abstract class AbstractDictionnary{
     protected int size;
 
     public AbstractDictionnary(){
-        this.keys = new ArrayList<Object>();
-        this.values = new ArrayList<Object>();
+        this.keys = [];
+        this.values = [];
+        this.size = 0;
     }
 
     public abstract int indexOf(Object key);
@@ -26,7 +27,7 @@ public abstract class AbstractDictionnary{
             values[indexOf(key)] = value;
         }
         keys[res-1] = key;
-        values[newIndexOf(key)] = value;
+        values[res-1] = value;
         return this
     }
 
