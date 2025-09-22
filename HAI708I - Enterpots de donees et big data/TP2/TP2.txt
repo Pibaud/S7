@@ -1,0 +1,7 @@
+question 4) 
+on remarque que le temps d'exécution et le nombre de lignes en jeu a drastiquement baissé.
+Grâce à l'ajout de la clé primaire, l'optimiseur choisit fait en premier lieu un INDEX UNIQUE SCAN qu'il ne faisait pas avant et
+qui lui permet de ne traiter qu'une seule ligne.
+
+6)
+dans la 5), l'optimiseur préfère NESTED LOOP, alors que pour la jointure il choisit un HASH JOIN
