@@ -21,10 +21,9 @@ public class OrderedDictionnary extends AbstractDictionnary{
         System.arraycopy(this.values, 0, newValues, 0, this.size);
         this.keys = newKeys;
         this.values = newValues;
-        int index = this.size;
         // On n'augmente pas la taille ici, car la taille représente le nombre réel d'éléments dans les tableaux
         // et comme on n'insère pas ici, pas d'incrément de taille
-        return index;
+        return this.size;
     }
     /*
         Une affectation polymorphique en Java (ou dans d’autres langages orientés objet) consiste à affecter à une variable 

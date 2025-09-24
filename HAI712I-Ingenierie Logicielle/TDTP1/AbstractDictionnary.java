@@ -31,10 +31,8 @@ public abstract class AbstractDictionnary implements IDictionnary {
             this.size ++;
             return this;
         }
-        System.out.println("gargl");
-        keys[index] = key;
+        System.out.println("existe déjà");
         values[index] = value;
-        this.size ++;
         return this;    
     }
 
