@@ -1,0 +1,10 @@
+1) 
+- crée un vecteur flottant de dimension d
+- pour insérer une nouvelle ligne à partir d'une liste
+- pour insérer une nouvelle ligne à partir d'un vecteur
+
+2)
+- retourne la i-ème ligne de la matrice
+
+ratio = 1/1 2/1 1/2
+Mi+1 = 0 0 1
