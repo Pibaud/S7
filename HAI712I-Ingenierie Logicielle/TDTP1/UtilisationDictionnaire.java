@@ -14,9 +14,7 @@ public class UtilisationDictionnaire {
         System.out.println("===== Fast Dictionnary =====");
         dic = new FastDictionnary();
         dic.put("Lavoisier", "Chimiste Français");
-        System.out.println("taille : " + dic.size());
-        System.out.println("Lavoisier : " + dic.get("Lavoisier"));
-        System.out.println("isEmpty = " + dic.isEmpty());
-        System.out.println("containsKey 'Lavoisier' = " + dic.containsKey("Lavoisier"));
+        dic.put("Einstein", "Physicien");
+        dic.put("Euler", "Astrophysicien");
     }
 }   
