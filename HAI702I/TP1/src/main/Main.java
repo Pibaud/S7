@@ -10,6 +10,12 @@ public class Main {
 		// starting with example from TD
 		ArrayList<Matrice> tests = new ArrayList<>();
 		tests.add(new Matrice(new double[][]  {{0, 1, 2}, {1, 2, 1}, {2, 1, 1}}));
+        System.out.println("=========== TestMatrice ===========");
+        algebre.TestMatrice.main(new String[]{});
+        System.out.println("=========== TestVecteur ===========");
+        algebre.TestVecteur.main(new String[]{});
+        System.out.println("=========== TestVecteur2D ===========");
+        algebre.TestVecteur2D.main(new String[]{});
 		tests.add(new Matrice(new double[][]  {{0, 1, 2}, {0, 0, 0}, {1, 2, 3}}));
 		tests.add(new Matrice(new double[][]  {{2, 0, 0}, {0, 3, 0 }, { 0, 0, 4 }}));
 		tests.add(new Matrice(new double[][]  {{1, 0, 0}, {0, 0, 0 }, { 0, 0, 5 } }));
@@ -42,6 +48,7 @@ public class Main {
 		tests.add(new Matrice(new double[][]  {{3, 4, 1 }, { 7, 0, 4 }, { 2, 2, 2 } }));
 		tests.add(new Matrice(new double[][]  {{0, 2, 1 }, {1 , 3 , 4 }, { 2, 0, 1 } }));	
 		//todo
+		System.out.println("tests d'inversion de matrice");
 		for (Matrice mat : tests) {
 			mat.print();
 			System.out.println();
