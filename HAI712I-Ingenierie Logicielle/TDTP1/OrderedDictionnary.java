@@ -1,7 +1,7 @@
-public class OrderedDictionnary extends AbstractDictionnary{
+public class OrderedDictionnary extends AbstractDictionnary<Object, Object> {
 
     public OrderedDictionnary(){
-        super();
+        super(Object.class, Object.class);
     }
 
     public int indexOf(Object key){

@@ -1,32 +1,36 @@
-public class FastDictionnary extends AbstractDictionnary{
+public class FastDictionnary extends AbstractDictionnary<Object, Object> {
 
     public FastDictionnary(){
-        super();
+        super(Object.class, Object.class);
     }
 
-    public boolean mustGrow(){
-        double placesLibres = this.keys.length;
-        double placesPrises = this.size;
-        return placesLibres/placesPrises < 3./4;
+    public boolean mustGrow() {
+        if (keys.length == 0) return true;
+        return (double) size / keys.length >= 0.75;
     }
 
-    public void grow(){
-        System.out.println("MUST GROW");
-        System.out.println("previous length : " + this.size);
-        int len = this.keys.length;
-        if(size == 0){size = 1;}
-        Object[] newKeys = new Object[size + size/4];
-        Object[] newValues = new Object[size + size/4];
-        System.arraycopy(this.keys, 0, newKeys, 0, this.size);
-        System.arraycopy(this.values, 0, newValues, 0, this.size);
-        this.keys = newKeys;
-        this.values = newValues;
-        System.out.println("new size : " + this.size);
+    public void grow() {
+        int newCapacity = (keys.length == 0) ? 4 : keys.length * 2;
+        Object[] oldKeys = this.keys;
+        Object[] oldValues = this.values;
+        this.keys = new Object[newCapacity];
+        this.values = new Object[newCapacity];
+        for (int i = 0; i < oldKeys.length; i++) {
+            if (oldKeys[i] != null) {
+                int newIndex = Math.abs(oldKeys[i].hashCode()) % newCapacity;
+                while (this.keys[newIndex] != null) {
+                    newIndex = (newIndex + 1) % newCapacity;
+                }
+                this.keys[newIndex] = oldKeys[i];
+                this.values[newIndex] = oldValues[i];
+            }
+        }
     }
+
 
     public int indexOf(Object key){
-        for(int i = 0; i < size; i++){
-            if(keys[i].equals(key)){
+        for(int i = 0; i < keys.length; i++){
+            if(keys[i] != null && keys[i].equals(key)){
                 return i;
             }
         }
@@ -34,16 +38,30 @@ public class FastDictionnary extends AbstractDictionnary{
     }
 
     public int newIndexOf(Object key){
-        //maintenir aux 3/4 pleins donc augmenter la taille de size += size/4
-        //il faut recopier toutes les valeurs pour les mettre dans un tableau plus grand
         if(this.mustGrow()){this.grow();}
         int len = this.keys.length;
-        if(len == 0){len = 1;}
-        int newIndex = (key.hashCode())%len;
+        int newIndex = Math.abs(key.hashCode()) % len;
         while(this.keys[newIndex] != null){
-            System.out.println("CONFLIT");
-            newIndex++;
+            System.out.println("CONFLIT avec "+this.keys[newIndex]);
+            newIndex = (newIndex + 1) % len;
         }
         return newIndex;
     }
+
+    @Override
+    public String toString() {
+        StringBuilder sb = new StringBuilder();
+        sb.append("FastDictionnary contents:\n");
+        for (int i = 0; i < keys.length; i++) {
+            sb.append("[").append(i).append("] : ");
+            if (keys[i] != null) {
+                sb.append(keys[i]).append(" = ").append(values[i]);
+            } else {
+                sb.append("null");
+            }
+            sb.append("\n");
+        }
+        return sb.toString();
+    }
+
 }

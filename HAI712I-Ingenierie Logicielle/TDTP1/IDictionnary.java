@@ -1,7 +1,7 @@
-interface IDictionnary {
-    public Object get(Object key);
-    public IDictionnary put(Object key, Object value);
-    public boolean isEmpty();
-    public boolean containsKey(Object key);
-    public int size();
+public interface IDictionnary<K, V> {
+    int size();
+    boolean isEmpty();
+    boolean containsKey(K key);
+    V get(K key);
+    IDictionnary<K, V> put(K key, V value);
 }
