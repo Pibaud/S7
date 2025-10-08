@@ -46,10 +46,15 @@ public class TestMatrice {
 
         // Test covariance(ArrayList<Vecteur>)
         ArrayList<Vecteur> vecteurs = new ArrayList<>();
-        vecteurs.add(new Vecteur(new double[] { 1, 2, 3 }));
-        vecteurs.add(new Vecteur(new double[] { 3, 4, 5 }));
-        vecteurs.add(new Vecteur(new double[] { 5, 6, 7 }));
+        vecteurs.add(new Vecteur(new double[] {1, 5, 2}));
+        vecteurs.add(new Vecteur(new double[] {2, 3, 3}));
+        vecteurs.add(new Vecteur(new double[] {3, 1, 4}));
         System.out.println("Matrice de covariance:");
+        Matrice cov = Matrice.covariance(vecteurs);
+        System.out.println("Covariance:");
+        System.out.println(cov);
+
+        //test espérance
         ArrayList<Matrice> matrices = new ArrayList<>();
         matrices.add(new Matrice(new double[][] {
                 { 1, 2, 3 },
