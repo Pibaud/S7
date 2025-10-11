@@ -220,4 +220,41 @@ public class Matrice {
 		}
 		return sumMat;
 	}
+
+	// Approfondissement
+
+	/**
+	 * Calcule la distance de Frobenius entre deux matrices (racine carrée de la somme des carrés des différences)
+	 */
+	public double distanceFrobenius(Matrice m2) {
+		if (this.dimension != m2.dimension)
+			throw new IllegalArgumentException("Dimensions différentes");
+		double somme = 0;
+		for (int i = 0; i < dimension; i++) {
+			for (int j = 0; j < dimension; j++) {
+				double diff = this.m[i][j] - m2.m[i][j];
+				somme += diff * diff;
+			}
+		}
+		return Math.sqrt(somme);
+	}
+
+	/**
+	 * Retourne une matrice normalisée (chaque colonne de norme 1)
+	 */
+	public Matrice normaliser() {
+		double[][] res = new double[dimension][dimension];
+		for (int j = 0; j < dimension; j++) {
+			double norme = 0;
+			for (int i = 0; i < dimension; i++) {
+				norme += m[i][j] * m[i][j];
+			}
+			norme = Math.sqrt(norme);
+			if (norme == 0) norme = 1;
+			for (int i = 0; i < dimension; i++) {
+				res[i][j] = m[i][j] / norme;
+			}
+		}
+		return new Matrice(res);
+	}
 }
