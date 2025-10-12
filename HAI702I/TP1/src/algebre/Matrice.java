@@ -66,8 +66,12 @@ public class Matrice {
 		return dimension;
 	}
 
-	private double get(int i, int j) {
+	public double get(int i, int j) {
 		return m[i][j];
+	}
+
+	public void set(int i, int j, double value) {
+		m[i][j] = value;
 	}
 
 	public String toString() {
@@ -95,6 +99,25 @@ public class Matrice {
 			}
 		}
 		return new Matrice(m);
+	}
+
+	/**
+	 * Additionne cette matrice à une autre matrice de même dimension.
+	 * @param autre la matrice à additionner
+	 * @return une nouvelle matrice, somme des deux
+	 * @throws IllegalArgumentException si les dimensions ne correspondent pas
+	 */
+	public Matrice somme(Matrice autre) {
+		if (this.dimension != autre.dimension) {
+			throw new IllegalArgumentException("Dimensions différentes pour la somme de matrices");
+		}
+		double[][] res = new double[dimension][dimension];
+		for (int i = 0; i < dimension; i++) {
+			for (int j = 0; j < dimension; j++) {
+				res[i][j] = this.m[i][j] + autre.m[i][j];
+			}
+		}
+		return new Matrice(res);
 	}
 
 	public Matrice inverse() {
