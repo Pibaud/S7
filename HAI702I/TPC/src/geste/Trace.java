@@ -1,4 +1,5 @@
 package geste;
+
 import java.awt.Color;
 import java.awt.Graphics2D;
 import java.awt.Point;
@@ -17,10 +18,11 @@ import classifieur.Featured;
 import ui.Style;
 import ui.io.ReadWritePoint;
 
-public class Trace implements Featured{
+public class Trace implements Featured {
 	private ArrayList<PointVisible> points;
 	private Style style = new Style();
 	private Vecteur features;
+	private double[] featuresArray; // Ajout pour stocker les features
 	private boolean visible;
 
 	public Trace(boolean model) {
@@ -75,8 +77,8 @@ public class Trace implements Featured{
 
 	public void drawLines(Graphics2D g) {
 		PointVisible p1, p2;
-		//g.setColor(style.color());
-		g.setColor(new Color(128,128,128));
+		// g.setColor(style.color());
+		g.setColor(new Color(128, 128, 128));
 		for (int i = 0; i < points.size() - 1; i++) {
 			p1 = points.get(i);
 			p2 = points.get(i + 1);
@@ -102,9 +104,53 @@ public class Trace implements Featured{
 		}
 		return new Rectangle(minx, miny, maxx - minx, maxy - miny);
 	}
-	
+
 	public void initFeatures() {
-		//todo
+		// Initialisation du tableau des features
+		double[] featuresArray = new double[7];
+
+		// Vérification du nombre de points
+		if (points == null || points.size() < 2) {
+			return;
+		}
+
+		// Points de référence
+		PointVisible p0 = points.get(0); // Premier point
+		PointVisible p1 = points.get(1); // Deuxième point
+		PointVisible pn = points.get(points.size() - 1); // Dernier point
+
+		// 1. f1 = cos(alpha) = (x1 - x0) / sqrt((x1-x0)^2 + (y1-y0)^2)
+		double dx1 = p1.x - p0.x;
+		double dy1 = p1.y - p0.y;
+		double norm1 = Math.sqrt(dx1 * dx1 + dy1 * dy1);
+		featuresArray[0] = (norm1 == 0) ? 1 : dx1 / norm1;
+
+		// 2. f2 = sin(alpha) = (y1 - y0) / sqrt((x1-x0)^2 + (y1-y0)^2)
+		featuresArray[1] = (norm1 == 0) ? 0 : dy1 / norm1;
+
+		// 3. f3 = longueur de la diagonale de la bounding box
+		Rectangle bbox = computeBoundingBox();
+		double dxBox = bbox.width;
+		double dyBox = bbox.height;
+		featuresArray[2] = Math.sqrt(dxBox * dxBox + dyBox * dyBox);
+
+		// 4. f4 = angle de la diagonale de la bounding box
+		featuresArray[3] = Math.atan2(dyBox, dxBox);
+
+		// 5. f5 = distance entre le premier et le dernier point
+		double dxn = pn.x - p0.x;
+		double dyn = pn.y - p0.y;
+		double distPL = Math.sqrt(dxn * dxn + dyn * dyn);
+		featuresArray[4] = distPL;
+
+		// 6. f6 = cos(beta) = (xP-1 - x0) / f5
+		featuresArray[5] = (distPL == 0) ? 1 : dxn / distPL;
+
+		// 7. f7 = sin(beta) = (yP-1 - y0) / f5
+		featuresArray[6] = (distPL == 0) ? 0 : dyn / distPL;
+
+		// Stockage dans Vecteur pour compatibilité
+		features = new Vecteur(featuresArray);
 	}
 
 	public int exportWhenConfirmed(String filePath) {

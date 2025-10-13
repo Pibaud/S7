@@ -68,27 +68,45 @@ public class Geste implements Estimable{
 		
 	}
 
-	public Matrice getCovMatrix() {
-		return null; //todo
-	}
+       public Matrice getCovMatrix() {
+	       return covariance;
+       }
 
-	public void initEstimators(Matrice inverseEotccm) {
-		//todo
-	}
+       public void initEstimators(Matrice inverseEotccm) {
+	       // 1. Récupérer tous les vecteurs de features des traces
+	       ArrayList<Vecteur> featuresList = new ArrayList<>();
+	       for (Trace t : traces) {
+		       featuresList.add(t.getFeatureVector());
+	       }
 
-	public Vecteur getWeightVector() {
-		return null; //todo
-	}
+	       // 2. Calcul de la matrice de covariance
+	       covariance = Matrice.covariance(featuresList);
+
+	       // 3. Calcul de l'espérance (vecteur moyen)
+	       esperance = Vecteur.esperance(featuresList);
+
+	       // 4. Calcul du vecteur de poids : weightVector = inverseEotccm * esperance
+	       weightVector = inverseEotccm.mult(esperance);
+
+	       // 5. Calcul du biais : -1/2 * produit scalaire(weightVector, esperance)
+	       bias = -0.5 * weightVector.produitScalaire(esperance);
+       }
+
+       public Vecteur getWeightVector() {
+	       return weightVector;
+       }
 	
-	public double getBias() {
-		return 0; //todo
-	}
-	public Vecteur getEsperance() {
-		return null; //todo
-
-	}
-	public void initFeatures() {
-		//todo
-	}
+       public double getBias() {
+	       return bias;
+       }
+       public Vecteur getEsperance() {
+	       return esperance;
+       }
+       public void initFeatures() {
+	       // Initialise les features de chaque trace
+	       for (Trace t : traces) {
+		       t.initFeatures();
+	       }
+       }
 
 }
