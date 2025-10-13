@@ -5,6 +5,9 @@ import geste.Lexique;
 import geste.Trace;
 
 public interface Recognizer {
-	public Geste recognize(Trace t);
-	public double[] test(Lexique lexicon) ;
+    public void init(Lexique l);
+    public Geste recognize(Trace t);
+    public double[] test(Lexique lexicon) ;
+    public double testGeste(Geste g);
+    public double testLexique(Lexique lexicon);
 }

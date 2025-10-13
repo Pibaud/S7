@@ -16,7 +16,7 @@ public class Rubine implements Recognizer{
 	}
 
 	public void init(Lexique l) {
-		//todo
+        //esperance des matrices de covariance
 	}
 
 	@Override
