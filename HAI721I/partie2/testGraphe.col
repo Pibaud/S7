@@ -1,0 +1,9 @@
+c FILE: testGraphe
+c
+c SOURCE: Elouand Portes
+c
+c DESCRIPTION: Graphe
+
+p edge 4 12
+e 2 1
+=

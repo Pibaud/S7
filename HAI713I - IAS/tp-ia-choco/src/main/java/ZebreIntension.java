@@ -46,108 +46,33 @@ public class ZebreIntension {
 
 
         // Création des contraintes
-        int [][] tEq = new int[][] {{1,1},{2,2},{3,3},{4,4},{5,5}}; // représente "vivent sur la même maison"
-        Tuples tuplesAutorises = new Tuples(tEq,true);		// création de Tuples de valeurs autorisés
-        Tuples tuplesInterdits = new Tuples(tEq,false);		// création de Tuples de valeurs interdits
-        int [][] tRight = new int[][] {{5,4},{4,3},{3,2},{2,1}}; // représente "x à droite de y"
-        Tuples tuplesAutorisesR = new Tuples(tRight,true);		// création de Tuples de valeurs autorisés
-        Tuples tuplesInterditsR = new Tuples(tRight,false);		// création de Tuples de valeurs interdits
-        int [][] tN = new int[][] {{1,2},{2,1},{2,3},{3,2},{3,4},{4,3},{4,5},{5,4}}; // représente "x à droite de y"
-        Tuples tuplesAutorisesN = new Tuples(tN,true);		// création de Tuples de valeurs autorisés
-        Tuples tuplesInterditsN = new Tuples(tN,false);		// création de Tuples de valeurs interdits
 
-        model.table(new IntVar[]{blu,gre}, tuplesInterdits).post();
-        // création d'une contrainte en extension de portée <blu,gre>
-        // dont les tuples autorisés/interdits sont données par tuplesInterdits
-        model.table(new IntVar[]{blu,ivo}, tuplesInterdits).post();
-        model.table(new IntVar[]{blu,red}, tuplesInterdits).post();
-        model.table(new IntVar[]{blu,yel}, tuplesInterdits).post();
-        model.table(new IntVar[]{gre,ivo}, tuplesInterdits).post();
-        model.table(new IntVar[]{gre,red}, tuplesInterdits).post();
-        model.table(new IntVar[]{gre,yel}, tuplesInterdits).post();
-        model.table(new IntVar[]{ivo,red}, tuplesInterdits).post();
-        model.table(new IntVar[]{ivo,yel}, tuplesInterdits).post();
-        model.table(new IntVar[]{red,yel}, tuplesInterdits).post();
+        model.allDifferent(blu, gre, ivo, red, yel).post();
+        model.allDifferent(eng, jap, nor, spa, ukr).post();
+        model.allDifferent(cof, mil, ora, tea, wat).post();
+        model.allDifferent(dog, fox, hor, sna, zeb).post();
+        model.allDifferent(che, koo, luc, old, par).post();
 
-        model.table(new IntVar[]{eng,jap}, tuplesInterdits).post();
-        model.table(new IntVar[]{eng,nor}, tuplesInterdits).post();
-        model.table(new IntVar[]{eng,spa}, tuplesInterdits).post();
-        model.table(new IntVar[]{eng,ukr}, tuplesInterdits).post();
-        model.table(new IntVar[]{jap,nor}, tuplesInterdits).post();
-        model.table(new IntVar[]{jap,spa}, tuplesInterdits).post();
-        model.table(new IntVar[]{jap,ukr}, tuplesInterdits).post();
-        model.table(new IntVar[]{nor,spa}, tuplesInterdits).post();
-        model.table(new IntVar[]{nor,ukr}, tuplesInterdits).post();
-        model.table(new IntVar[]{spa,ukr}, tuplesInterdits).post();
-
-        model.table(new IntVar[]{cof,mil}, tuplesInterdits).post();
-        model.table(new IntVar[]{cof,ora}, tuplesInterdits).post();
-        model.table(new IntVar[]{cof,tea}, tuplesInterdits).post();
-        model.table(new IntVar[]{cof,wat}, tuplesInterdits).post();
-        model.table(new IntVar[]{mil,ora}, tuplesInterdits).post();
-        model.table(new IntVar[]{mil,tea}, tuplesInterdits).post();
-        model.table(new IntVar[]{mil,wat}, tuplesInterdits).post();
-        model.table(new IntVar[]{ora,tea}, tuplesInterdits).post();
-        model.table(new IntVar[]{ora,wat}, tuplesInterdits).post();
-        model.table(new IntVar[]{tea,wat}, tuplesInterdits).post();
-
-        model.table(new IntVar[]{dog,fox}, tuplesInterdits).post();
-        model.table(new IntVar[]{dog,hor}, tuplesInterdits).post();
-        model.table(new IntVar[]{dog,sna}, tuplesInterdits).post();
-        model.table(new IntVar[]{dog,zeb}, tuplesInterdits).post();
-        model.table(new IntVar[]{fox,hor}, tuplesInterdits).post();
-        model.table(new IntVar[]{fox,sna}, tuplesInterdits).post();
-        model.table(new IntVar[]{fox,zeb}, tuplesInterdits).post();
-        model.table(new IntVar[]{hor,sna}, tuplesInterdits).post();
-        model.table(new IntVar[]{hor,zeb}, tuplesInterdits).post();
-        model.table(new IntVar[]{sna,zeb}, tuplesInterdits).post();
-
-        model.table(new IntVar[]{che,koo}, tuplesInterdits).post();
-        model.table(new IntVar[]{che,luc}, tuplesInterdits).post();
-        model.table(new IntVar[]{che,old}, tuplesInterdits).post();
-        model.table(new IntVar[]{che,par}, tuplesInterdits).post();
-        model.table(new IntVar[]{koo,luc}, tuplesInterdits).post();
-        model.table(new IntVar[]{koo,old}, tuplesInterdits).post();
-        model.table(new IntVar[]{koo,par}, tuplesInterdits).post();
-        model.table(new IntVar[]{luc,old}, tuplesInterdits).post();
-        model.table(new IntVar[]{luc,par}, tuplesInterdits).post();
-        model.table(new IntVar[]{old,par}, tuplesInterdits).post();
-
+        model.arithm(eng, "=", red).post();
+        model.arithm(spa, "=", dog).post();
+        model.arithm(cof, "=", gre).post();
+        model.arithm(ukr, "=", tea).post();
+        model.arithm(gre, "=", ivo, "+", 1).post();
+        model.arithm(old, "=", sna).post();
+        model.arithm(koo, "=", yel).post();
+        model.arithm(mil, "=", mid).post();
+        model.arithm(nor, "=", fst).post();
+        model.distance(che, fox, "=", 1).post();
+        model.distance(koo, hor, "=", 1).post();
+        model.arithm(luc, "=", ora).post();
+        model.arithm(jap, "=", par).post();
+        model.distance(nor, blu, "=", 1).post();
 
         /************************************************************************
          *                                                                      *
          * Compléter en ajoutant les contraintes modélisant les phrases 2 à 15  *
          *                                                                      *
          ************************************************************************/
-
-        //phrase 2
-        model.table(new IntVar[]{eng,red}, tuplesAutorises).post();
-        //phrase 3
-        model.table(new IntVar[]{spa,dog}, tuplesAutorises).post();
-        //phrase 4
-        model.table(new IntVar[]{cof,gre}, tuplesAutorises).post();
-        //phrase 5
-        model.table(new IntVar[]{ukr,tea}, tuplesAutorises).post();
-        //phrase 6
-        model.table(new IntVar[]{gre,ivo}, tuplesAutorisesR).post();
-        //phrase 7
-        model.table(new IntVar[]{old,sna}, tuplesAutorises).post();
-        //phrase 8
-        model.table(new IntVar[]{koo,yel}, tuplesAutorises).post();
-        //phrase 9
-        model.table(new IntVar[]{mil,mid}, tuplesAutorises).post();
-        //phrase 10
-        model.table(new IntVar[]{nor,fst}, tuplesAutorises).post();
-        //phrase 11
-        model.table(new IntVar[]{che,fox}, tuplesAutorisesN).post();
-        //phrase 12
-        model.table(new IntVar[]{koo,hor}, tuplesAutorisesN).post();
-        //phrase 13
-        model.table(new IntVar[]{luc,ora}, tuplesAutorises).post();
-        //phrase 14
-        model.table(new IntVar[]{jap,par}, tuplesAutorises).post();
-        //phrase 15
-        model.table(new IntVar[]{nor,blu}, tuplesAutorisesN).post();
 
         // Affichage du réseau de contraintes créé
         System.out.println("*** Réseau Initial ***");

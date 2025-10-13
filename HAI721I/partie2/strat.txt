@@ -1,0 +1,6 @@
+1. lire les lignes
+2. comme chaque ligne contient les deux noeuds
+3. le serveur envoie à noeud1 une struct avec adresse + port + index de noeud2
+4. chaque pi qui reçoit un message du serveur check l'index :
+    - si index < index du Pi : on connect avec lui
+    - sinon index > index du Pi : on l'accept
