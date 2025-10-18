@@ -3,8 +3,10 @@ package geste;
 import java.awt.Point;
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Arrays;
 
 import algebre.Vecteur;
+import algebre.Vecteur2D;
 import classifieur.Featured;
 import io.ReadWritePoint;
 
@@ -45,13 +47,15 @@ public class Trace implements Featured {
 		// 1. Cosinus de l'angle alpha (début du tracé)
         StampedCoord p0 = points.get(0); // Premier point
         StampedCoord p1 = points.get(1); // Deuxième point
-		double dx1 = p1.x - p0.x;
-		double dy1 = p1.y - p0.y;
-		double denom1 = Math.sqrt(dx1 * dx1 + dy1 * dy1);
-        featuresList[0] = dx1/denom1;
+
+        // 1. Cosinus de l'angle alpha (début du tracé)
+        this.features = new Vecteur(13);
+        Vecteur2D v1 = new Vecteur2D(points.get(0).getX(),points.get(0).getY());
+        Vecteur2D v2 = new Vecteur2D(points.get(2).getX(),points.get(2).getY());
+        featuresList[0] = v1.cosinus(v2);
 
         // 2. Sinus alpha
-        featuresList[1] = dy1/denom1;
+        featuresList[1] = v1.sinus(v2);
 
         // 3. Longueur de la diagonale du rectangle englobant
         double minx, miny, maxx, maxy;
@@ -150,7 +154,7 @@ public class Trace implements Featured {
             double deltaYp = pi1.y - pi.y;
             double deltaT = pi1.timeStamp - pi.timeStamp;
             double current = (Math.pow(deltaXp, 2) +  Math.pow(deltaYp, 2)) / Math.pow(deltaT, 2);
-            if(current >= max){
+            if(current >= max && deltaT != 0){
                 max = current;
             }
         }

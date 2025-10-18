@@ -4,7 +4,7 @@ import algebre.Matrice;
 import algebre.Vecteur;
 
 public interface Estimable {
-	public void initFeatures();
+	public void init();
 	public Matrice getCovMatrix();
 	public Vecteur getEsperance();
 	public void initEstimators(Matrice m);

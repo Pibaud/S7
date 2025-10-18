@@ -102,11 +102,14 @@ public class Geste implements Estimable{
        public Vecteur getEsperance() {
 	       return esperance;
        }
-       public void initFeatures() {
+
+       public void init() {
 	       // Initialise les features de chaque trace
 	       for (Trace t : traces) {
 		       t.initFeatures();
 	       }
+
+		   esperance = Vecteur.esperance()
        }
 
 }

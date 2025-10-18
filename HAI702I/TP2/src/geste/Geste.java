@@ -61,10 +61,37 @@ public class Geste {
 		return nom;
 	}
 
-	public void initEstimators(Matrice inverseEotccm) {
-		//todo
+	public Matrice getCovariance() {
+		return covariance;
 	}
 
+	public void initEstimators(Matrice inverseEotccm) {
+		weightVector = inverseEotccm.mult(this.esperance);
+		bias = -0.5*this.esperance.produitScalaire(weightVector);
+	}
 
+	public double getBias() {
+		return bias;
+	}
 
+	public Vecteur getWeightVector() {
+		return weightVector;
+	}
+
+	public Vecteur getEsperance() {
+		return esperance;
+	}
+
+	@Override
+	public String toString() {
+		return "Geste{" +
+				"nom='" + nom + '\'' +
+				", traces=" + traces +
+				", modele=" + modele +
+				", covariance=" + covariance +
+				", esperance=" + esperance +
+				", weightVector=" + weightVector +
+				", bias=" + bias +
+				'}';
+	}
 }

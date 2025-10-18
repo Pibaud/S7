@@ -55,6 +55,7 @@ public class Vecteur {
 	public double norme() {
 		return Math.sqrt(normeCarre());
 	}
+
 	public Vecteur minus(Vecteur g) {
 		double[] resultat = new double[g.getDimension()];
 		for (int i = 0; i < coords.length; i++) {
