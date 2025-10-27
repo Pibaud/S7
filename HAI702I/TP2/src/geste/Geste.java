@@ -22,14 +22,6 @@ public class Geste {
 	}
 		
 	public void init() {
-        /*
-            calculer le vecteur de features pour chaque trace associée au geste appelant, la méthode initFeatures();de la classe Trace
-    calculer le vecteur moyen des vecteurs de features représentant les tracés du geste appelant. Et, mémoriser le résultat dans l'attribut privé esperance de la classe Geste
-    calculer la matrice de covariance construite d'après les vecteurs de features représentant les tracés (échantillons issus de l'apprentissage) du geste appelant, et mémoriser le résultat dans l'attribut privé covariance de la classe Geste
-
-         */
-		Lexique l = new Lexique();
-        l.initData();
         ArrayList<Vecteur> vecteurs = new ArrayList<Vecteur>();
 
         for(Trace trace : traces) {

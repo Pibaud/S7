@@ -21,23 +21,25 @@ public class Vecteur {
 			coords[i] = v.get(i);
 	}
 
-	// précondition - les vecteurs de la liste ont tous la meme dimension
 	public static Vecteur esperance(ArrayList<Vecteur> lv) {
 		if (lv.size() == 0) return null;
 		int dimension = lv.get(0).getDimension();
 		double resultat[] = new double[dimension];
 		for (Vecteur v: lv) {
+			// sécurité : vérifier la dimension homogène
+			if (v.getDimension() != dimension) throw new IllegalArgumentException("Vectors must have same dimension");
 			for (int i = 0; i < dimension; i++) {
-				resultat[i] += v.coords[i]; 
+				resultat[i] += v.coords[i];
 			}
 		}
-		
+
 		for (int i = 0; i < dimension; i++) {
-			resultat[i] /= dimension; 
+			// BUG corrigé : diviser par le nombre de vecteurs (lv.size()), pas par la dimension
+			resultat[i] /= lv.size();
 		}
-		
+
 		return new Vecteur(resultat);
-	}	
+	}
 	
 	// précondition - les deux vecteurs (this et v) sont de même dimension
 	public double produitScalaire(Vecteur v) {

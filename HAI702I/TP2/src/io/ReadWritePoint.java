@@ -37,21 +37,46 @@ public class ReadWritePoint {
 	}
 
 	StampedCoord readLine(String aLine, int i) {
+		if (aLine == null) return null;
+		aLine = aLine.trim();
+		if (aLine.isEmpty()) return null;
+
 		Scanner scanner = new Scanner(aLine);
 		scanner.useDelimiter(";");
 		StampedCoord p = null;
-		String x,y,t, label;
-		
-		if (scanner.hasNext()) {
-			// assumes the line has a certain structure
-			x = scanner.next();
-			y = scanner.next();
-			t = scanner.next();
-			label = scanner.hasNext() ? scanner.next():"p"+i;
 
-			p = new StampedCoord(Integer.parseInt(x), Integer.parseInt(y), Long.parseLong(t));
+		try {
+			if (!scanner.hasNext()) return null;
+			String xs = scanner.next().trim();
+			if (!scanner.hasNext()) return null;
+			String ys = scanner.next().trim();
+			if (!scanner.hasNext()) return null;
+			String third = scanner.next().trim(); // timestamp or label
+			String label = null;
+			long t;
+
+			// try parse third token as timestamp
+			try {
+				t = Long.parseLong(third);
+				label = scanner.hasNext() ? scanner.next().trim() : "p" + i;
+			} catch (NumberFormatException nfe) {
+				// third token is label, synthesize timestamp
+				label = third;
+				t = i * 10L; // 10 ms per point, fixed step
+			}
+
+			int xi = Integer.parseInt(xs);
+			int yi = Integer.parseInt(ys);
+
+			p = new StampedCoord(xi, yi, t);
+			p.setLabel(label);
+		} catch (Exception ex) {
+			System.err.println("ReadWritePoint: failed to parse line " + i + " in file '" + rf.getPath() + "' -> '" + aLine + "' : " + ex.getMessage());
+			p = null;
+		} finally {
+			scanner.close();
 		}
-		scanner.close();
+
 		return p;
 	}
 

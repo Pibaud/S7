@@ -1,6 +1,5 @@
 package geste;
 
-import java.awt.Graphics2D;
 import java.io.File;
 import java.util.ArrayList;
 
@@ -19,36 +18,41 @@ public class Lexique {
 		gestes.add(g);
 	}
 
-
-
-	public void initData() {
-		String name, extension;
-		File dataDir = new File(Parameters.defaultFolder + "/" + Parameters.rawData + "/");
+	public void initData(String split) {
+		String name;
+		File racine = new File(Parameters.defaultFolder + "/" + split + "/");
 
 		Trace model, t;
 		Geste geste;
 
-		if (dataDir.exists() && dataDir.isDirectory()) {
-			for (File traceDir : dataDir.listFiles()) {
-				name = traceDir.getName();
-				model = new Trace(true, Parameters.defaultFolder + "/" + Parameters.rawData + "/" + name + "/" + name
-						+ "-" + Parameters.baseModelName + ".csv");
-				geste = new Geste(name, model);
-				add(geste);
-				//System.out.println("creating gesture for "+name);
-				for (File trace : traceDir.listFiles()) {
-					name = trace.getName();
-					extension = name.substring(name.lastIndexOf('.'), name.length());
-					if (extension.equals(".csv")) {
-						name = name.substring(0, name.lastIndexOf('.'));
+		if (racine.exists() && racine.isDirectory()) {
+			for (File dataX : racine.listFiles()) {
+				if (!dataX.isDirectory()) continue;
+				File rawData = new File(dataX, Parameters.rawData);
+				if (!rawData.exists() || !rawData.isDirectory()) continue;
+				for (File traceDir : rawData.listFiles()) {
+					if (!traceDir.isDirectory()) continue;
+					name = traceDir.getName();
+					File premierModel = null;
+					for (File f : traceDir.listFiles()) {
+						if (f.getName().endsWith("-" + Parameters.baseModelName + ".csv")) {
+							premierModel = f;
+							break;
+						}
 					}
-					t = new Trace(false,trace.getPath());
-					if (t.size() > 2) geste.addTrace(t);
-					//System.out.println("loading trace from "+trace.getPath());
+					if (premierModel == null) continue;
+					model = new Trace(true, premierModel.getPath());
+					geste = new Geste(name, model);
+					add(geste);
+					for (File trace : traceDir.listFiles()) {
+						String fname = trace.getName();
+						if (!fname.toLowerCase().endsWith(".csv")) continue;
+						if (trace.equals(premierModel)) continue;
+						t = new Trace(false, trace.getPath());
+						if (t.size() > 2) geste.addTrace(t);
+					}
 				}
 			}
-		} else {
-			System.out.println("Warning: file " + dataDir.getName() + " does not exist");
 		}
 	}
 
@@ -59,5 +63,4 @@ public class Lexique {
 	public ArrayList<Geste> getGestes() {
 		return this.gestes;
 	}
-
 }

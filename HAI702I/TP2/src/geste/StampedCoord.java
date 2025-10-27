@@ -3,6 +3,7 @@ package geste;
 public class StampedCoord  {
 	int x, y;
 	long timeStamp;
+	String label;
 	
 	public StampedCoord(int x, int y) {
 		this.x = x;
@@ -16,6 +17,8 @@ public class StampedCoord  {
 
 	public StampedCoord copy() {
 		StampedCoord p = new StampedCoord(this.x, this.y);
+		p.label = this.label;
+		p.timeStamp = this.timeStamp;
 		return p;
 	}
 
@@ -34,5 +37,14 @@ public class StampedCoord  {
 
 	public int getY() {
 		return y;
+	}
+
+	public void setLabel(String label) {
+		this.label = label;
+	}
+
+	@Override
+	public String toString() {
+		return label == null ? "p" : label;
 	}
 }

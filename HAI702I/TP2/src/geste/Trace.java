@@ -14,6 +14,7 @@ public class Trace implements Featured {
 	private ArrayList<StampedCoord> points;
 	private Vecteur features;
 	boolean model;
+	private String path;
 
 	public Trace(boolean model) {
 		points = new ArrayList<StampedCoord>();
@@ -22,6 +23,7 @@ public class Trace implements Featured {
 
 	public Trace(boolean model, String fileName) {
 		this(model);
+		this.path = fileName;
 		File f = new File(fileName);
 		ReadWritePoint rwp = new ReadWritePoint(f);
 		points = rwp.read();
@@ -36,138 +38,99 @@ public class Trace implements Featured {
 	}
 
 	public void initFeatures() {
-		// Initialisation du tableau des features
-		double[] featuresList = new double[13];
-
-		// Vérification du nombre de points
-		if (points == null || points.size() < 2) {
+        double[] featuresList = new double[11];
+        int n = points.size();
+        if (n < 3) {
+            features = new Vecteur(featuresList);
             return;
         }
 
-		// 1. Cosinus de l'angle alpha (début du tracé)
-        StampedCoord p0 = points.get(0); // Premier point
-        StampedCoord p1 = points.get(1); // Deuxième point
+        StampedCoord p0 = points.get(0);
+        StampedCoord p1 = points.get(1);
+        StampedCoord p2 = points.get(2);
+        StampedCoord pn = points.get(n - 1);
 
-        // 1. Cosinus de l'angle alpha (début du tracé)
-        this.features = new Vecteur(13);
-        Vecteur2D v1 = new Vecteur2D(points.get(0).getX(),points.get(0).getY());
-        Vecteur2D v2 = new Vecteur2D(points.get(2).getX(),points.get(2).getY());
-        featuresList[0] = v1.cosinus(v2);
+        // f1, f2
+        double dx01 = p1.x - p0.x;
+        double dy01 = p1.y - p0.y;
+        double norm01 = Math.hypot(dx01, dy01);
+        featuresList[0] = (norm01 != 0) ? dx01 / norm01 : 0; // cos(angle avec l'axe X)
+        featuresList[1] = (norm01 != 0) ? dy01 / norm01 : 0; // sin(angle avec l'axe X)
 
-        // 2. Sinus alpha
-        featuresList[1] = v1.sinus(v2);
-
-        // 3. Longueur de la diagonale du rectangle englobant
-        double minx, miny, maxx, maxy;
-        minx = points.getFirst().x;
-        maxx = points.getFirst().x;
-        miny = points.getFirst().y;
-        maxy = points.getFirst().y;
+        // f3, f4
+        double minx = p0.x, maxx = p0.x, miny = p0.y, maxy = p0.y;
         for (StampedCoord p : points) {
-            if (p.x < minx)
-                minx = p.x;
-            if (p.y < miny)
-                miny = p.y;
-            if (p.x > maxx)
-                maxx = p.x;
-            if (p.y > maxy)
-                maxy = p.y;
+            if (p.x < minx) minx = p.x;
+            if (p.x > maxx) maxx = p.x;
+            if (p.y < miny) miny = p.y;
+            if (p.y > maxy) maxy = p.y;
         }
-		featuresList[2] = Math.sqrt((maxx - minx) * (maxx - minx) + (maxx - minx) * (maxy - miny));
-
-        // 4. Orientation de la diagonale du rectangle englobant (gamma)
+        featuresList[2] = Math.hypot(maxx - minx, maxy - miny);
         featuresList[3] = Math.atan2(maxy - miny, maxx - minx);
 
-        // 5. Distance entre le premier et le dernier point
-        StampedCoord pn = points.get(points.size() - 1); // Dernier point
-        double f5 = Math.sqrt((pn.x - p0.x) * (pn.x - p0.x) + (pn.y - p0.y) * (pn.y - p0.y));
-        featuresList[4] = f5;
+        // f5
+        double dxn = pn.x - p0.x;
+        double dyn = pn.y - p0.y;
+        double dist = Math.hypot(dxn, dyn);
+        featuresList[4] = dist;
 
-        // 6. Cosinus de l'angle de fin de tracé (beta)
-        featuresList[5] = (pn.x - p0.x) / f5;
+        // f6, f7
+        featuresList[5] = (dist != 0) ? dxn / dist : 0;
+        featuresList[6] = (dist != 0) ? dyn / dist : 0;
 
-        // 7. Sinus beta
-        featuresList[6] = (pn.y - p0.y) / f5;
-
-        // 8. Longueur totale de la courbe
-        double sum = 0;
-        for(int i=0; i < points.size()-2; i++) {
-            StampedCoord pi = points.get(i);
-            StampedCoord pi1 = points.get(i+1);
-            double deltaXp = pi1.x - pi.x;
-            double deltaYp = pi1.y - pi.y;
-            sum += Math.sqrt(Math.pow(deltaXp,2) + Math.pow(deltaYp,2));
+        // f8
+        double sumLen = 0;
+        for (int i = 0; i < n - 1; i++) {
+            double dx = points.get(i + 1).x - points.get(i).x;
+            double dy = points.get(i + 1).y - points.get(i).y;
+            sumLen += Math.hypot(dx, dy);
         }
-        featuresList[7] = sum;
+        featuresList[7] = sumLen;
 
-        // 9. Somme des angles entre deux vecteurs consécutifs du tracé
-        double sum2 = 0;
-        for(int i=1; i < points.size()-2; i++) {
-            StampedCoord pi = points.get(i);
-            StampedCoord pi1 = points.get(i+1);
-            StampedCoord piMoins1 =  points.get(i-1);
-            double deltaXp = pi1.x - pi.x;
-            double deltaYp = pi1.y - pi.y;
-            double deltaXpMoins1 = pi.x - piMoins1.x;
-            double deltaYpMoins1 = pi.y - piMoins1.y;
-            sum2 += Math.atan2(deltaXp * deltaYpMoins1 - deltaXpMoins1 * deltaYpMoins1,
-                              deltaXp * deltaXpMoins1 +  deltaYp * deltaYpMoins1);
+        // f9, f10, f11
+        double sumTheta = 0, sumAbsTheta = 0, sumCarreTheta = 0;
+        for (int i = 1; i < n - 1; i++) {
+            double dx1 = points.get(i).x - points.get(i - 1).x;
+            double dy1 = points.get(i).y - points.get(i - 1).y;
+            double dx2 = points.get(i + 1).x - points.get(i).x;
+            double dy2 = points.get(i + 1).y - points.get(i).y;
+
+            double num = dx2 * dy1 - dx1 * dy2;
+            double den = dx2 * dx1 + dy2 * dy1;
+            double theta = Math.atan2(num, den);
+
+            sumTheta += theta;
+            sumAbsTheta += Math.abs(theta);
+            sumCarreTheta += theta * theta;
         }
-        featuresList[8] = sum2;
+        featuresList[8] = sumTheta;
+        featuresList[9] = sumAbsTheta;
+        featuresList[10] = sumCarreTheta;
 
-        // 10. Somme des valeurs absolues des angles entre deux vecteurs consécutifs du tracé
-        double sum3 = 0;
-        for(int i=1; i < points.size()-2; i++) {
-            StampedCoord pi = points.get(i);
-            StampedCoord pi1 = points.get(i+1);
-            StampedCoord piMoins1 =  points.get(i-1);
-            double deltaXp = pi1.x - pi.x;
-            double deltaYp = pi1.y - pi.y;
-            double deltaXpMoins1 = pi.x - piMoins1.x;
-            double deltaYpMoins1 = pi.y - piMoins1.y;
-            sum3 += Math.abs(Math.atan2(deltaXp * deltaYpMoins1 - deltaXpMoins1 * deltaYpMoins1,
-                                       deltaXp * deltaXpMoins1 +  deltaYp * deltaYpMoins1));
-        }
-        featuresList[9] = sum3;
-
-        // 11. Somme des carrés des angles entre deux vecteurs consécutifs du tracé
-        double sum4 = 0;
-        for(int i=1; i < points.size()-2; i++) {
-            StampedCoord pi = points.get(i);
-            StampedCoord pi1 = points.get(i+1);
-            StampedCoord piMoins1 =  points.get(i-1);
-            double deltaXp = pi1.x - pi.x;
-            double deltaYp = pi1.y - pi.y;
-            double deltaXpMoins1 = pi.x - piMoins1.x;
-            double deltaYpMoins1 = pi.y - piMoins1.y;
-            sum4 += Math.pow(Math.atan2(deltaXp * deltaYpMoins1 - deltaXpMoins1 * deltaYpMoins1,
-                    deltaXp * deltaXpMoins1 +  deltaYp * deltaYpMoins1), 2);
-        }
-        featuresList[10] = sum4;
-
-        // 12. Vitesse max : max de la vitesse calculée pour chaque vecteur du tracé
-        double max = Double.MIN_VALUE;
-        for(int i=0; i < points.size()-2; i++) {
-            StampedCoord pi = points.get(i);
-            StampedCoord pi1 = points.get(i+1);
-            double deltaXp = pi1.x - pi.x;
-            double deltaYp = pi1.y - pi.y;
-            double deltaT = pi1.timeStamp - pi.timeStamp;
-            double current = (Math.pow(deltaXp, 2) +  Math.pow(deltaYp, 2)) / Math.pow(deltaT, 2);
-            if(current >= max && deltaT != 0){
-                max = current;
-            }
-        }
-        featuresList[11] = max;
-
-        // 13. Temps total mis pour réaliser le tracé
-        featuresList[12] = pn.timeStamp - p0.timeStamp;
-
-		features = new Vecteur(featuresList);
-	}
+//        // f12
+//        double maxSpeed = Double.NEGATIVE_INFINITY; // macro pour la + petite valeur possible
+//        for (int i = 0; i < n - 1; i++) {
+//            double dx = points.get(i + 1).x - points.get(i).x;
+//            double dy = points.get(i + 1).y - points.get(i).y;
+//            double dt = points.get(i + 1).timeStamp - points.get(i).timeStamp;
+//            if (dt != 0) {
+//                double speed = (dx * dx + dy * dy) / (dt * dt);
+//                if (speed > maxSpeed) maxSpeed = speed;
+//            }
+//        }
+//        featuresList[11] = maxSpeed;
+//
+//        // f13
+//        featuresList[12] = pn.timeStamp - p0.timeStamp;
+//
+//        features = new Vecteur(featuresList);
+    }
 
 	public Vecteur getFeatureVector() {
-		return new Vecteur(features);
+        if (features == null) {
+            initFeatures();
+        }
+        return new Vecteur(features);
 	}
 
 	public int size() {

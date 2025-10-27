@@ -21,7 +21,6 @@ public class Rubine implements Recognizer{
 		this.lexicon = l;
 		ArrayList<Matrice>covs = new ArrayList<Matrice>();
 		for(Geste geste : l.getGestes()){
-
 			geste.init();
 			covs.add(geste.getCovariance());
 		}
@@ -32,16 +31,15 @@ public class Rubine implements Recognizer{
 		for(Geste geste : l.getGestes()){
 			geste.initEstimators(this.inverseEotccm);
 		}
-
-        //esperance des matrices de covariance
-
 	}
 
 	@Override
-	//le lexique passé en paramètre doit être initialisé avant l'appel à test
-	public double[] test(Lexique lexicon) {
-		//todo
-		return null; //a changer
+	public double[] test(Lexique l) {
+        double[] taux = new double[l.getGestes().size()];
+        for (int i = 0; i < l.getGestes().size(); i++) {
+            taux[i] = testGeste(l.getGestes().get(i));
+        }
+		return taux;
 	}
 
 	double f(Vecteur x, Geste k){
@@ -54,7 +52,7 @@ public class Rubine implements Recognizer{
 		double maxScore = Double.MIN_VALUE;
 		Geste gesteReconnu = null;
 		for(Geste j : lexicon.getGestes()){
-			if(squaredMahalanobis(g, j.getEsperance()) < 5*g.getDimension()){
+			if(squaredMahalanobis(g, j.getEsperance()) <= 2 * Math.pow(j.getEsperance().getDimension(), 2)){
 				double score = f(g, j);
 				if(score > maxScore){
 					maxScore = score;
@@ -68,18 +66,15 @@ public class Rubine implements Recognizer{
 	public double squaredMahalanobis(Vecteur t, Vecteur g) {
 		Vecteur tMoinsg = t.minus(g);
 		Vecteur sigmatMoinsg = this.inverseEotccm.mult(tMoinsg);
-		// par associativité du produit matriciel, si la multiplication est (t-g)^T*sigma*(t-g)
-		// nous pouvons d'abord calculer sigma*(t-g)
-		// puis calculer <(t-g), sigma*(t-g)> sans avoir à coder la transposée
-		// (car ramené à des vecteurs, le produit matriciel correspond à un produit scalaire)
 		return  tMoinsg.produitScalaire(sigmatMoinsg);
 	}
 
 	public double testGeste(Geste g) {
 		double reconnus = 0;
 		for(Trace t : g.getTraces()){
-			if(g.equals(recognize(t))){
-				reconnus ++;
+			Geste recognized = recognize(t);
+			if (recognized != null && recognized.getName().equals(g.getName())) { //
+				reconnus++;
 			}
 		}
 		return reconnus / g.getTraces().size();

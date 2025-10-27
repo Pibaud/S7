@@ -41,8 +41,7 @@ public class Expe {
 	public static void main(String[] args) throws Exception{
         System.out.println("DEBUT DES LECTURES DES DIFFERENTS FICHIERS");
         HashMap<String, Integer> resSol =  new HashMap<>();
-        Path racine = Paths.get("../../../");
-        System.out.println("PATH: "+racine);
+        Path racine = Paths.get(".");
         // faire une boucle qui trouve tous les /*.txt
         try (DirectoryStream<Path> stream = Files.newDirectoryStream(racine, "*.txt")) {
             for (Path file : stream) {
