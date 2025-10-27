@@ -1,6 +1,11 @@
 import java.io.BufferedReader;
 import java.io.FileReader;
+import java.io.IOException;
 import java.lang.reflect.Array;
+import java.nio.file.DirectoryStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.HashMap;
 
@@ -34,63 +39,36 @@ public class Expe {
 		
 			
 	public static void main(String[] args) throws Exception{
-        System.out.println("BENCH.TXT");
+        System.out.println("DEBUT DES LECTURES DES DIFFERENTS FICHIERS");
         HashMap<String, Integer> resSol =  new HashMap<>();
-		String ficName = "bench.txt";
-        resSol.put(ficName,0);
-		int nbRes=3;
-		BufferedReader readFile = new BufferedReader(new FileReader(ficName));
-		for(int nb=1 ; nb<=nbRes; nb++) {
-			Model model=lireReseau(readFile);
-			if(model==null) {
-				System.out.println("Problème de lecture de fichier !\n");
-				return;
-			}
-			System.out.println("Réseau lu "+nb+" :\n"+model+"\n\n");
-            // Calcul de la première solution
-            if(model.getSolver().solve()) {
-                System.out.println("\n\n*** Première solution ***");
-                System.out.println(model);
-                resSol.put(ficName,resSol.get(ficName)+1);
+        Path racine = Paths.get("../../../");
+        System.out.println("PATH: "+racine);
+        // faire une boucle qui trouve tous les /*.txt
+        try (DirectoryStream<Path> stream = Files.newDirectoryStream(racine, "*.txt")) {
+            for (Path file : stream) {
+                String ficName = String.valueOf(file.getFileName());
+                System.out.println("Lecture de : " + ficName);
+                resSol.put(ficName,0);
+                int nbRes=3;
+                BufferedReader readFile = new BufferedReader(new FileReader(ficName));
+                for(int nb=1 ; nb<=nbRes; nb++) {
+                    Model model=lireReseau(readFile);
+                    if(model==null) {
+                        System.out.println("Problème de lecture de fichier !\n");
+                        return;
+                    }
+                    System.out.println("Réseau lu "+nb+" :\n"+model+"\n\n");
+                    // Calcul de la première solution
+                    if(model.getSolver().solve()) {
+                        System.out.println("\n\n*** Première solution ***");
+                        System.out.println(model);
+                        resSol.put(ficName,resSol.get(ficName)+1);
+                    }
+                }
             }
-		}
-        System.out.println("BENCHSATISF.TXT");
-        ficName = "benchSatisf.txt";
-        resSol.put(ficName,0);
-        readFile = new BufferedReader(new FileReader(ficName));
-        for(int nb=1 ; nb<=nbRes; nb++) {
-            Model model=lireReseau(readFile);
-            if(model==null) {
-                System.out.println("Problème de lecture de fichier !\n");
-                return;
-            }
-            System.out.println("Réseau lu "+nb+" :\n"+model+"\n\n");
-            // Calcul de la première solution
-            if(model.getSolver().solve()) {
-                System.out.println("\n\n*** Première solution ***");
-                System.out.println(model);
-                resSol.put(ficName,resSol.get(ficName)+1);
-            }
-        }
-        System.out.println("BENCHINSAT.TXT");
-        ficName = "benchInsat.txt";
-        resSol.put(ficName,0);
-        readFile = new BufferedReader(new FileReader(ficName));
-        for(int nb=1 ; nb<=nbRes; nb++) {
-            Model model=lireReseau(readFile);
-            if(model==null) {
-                System.out.println("Problème de lecture de fichier !\n");
-                return;
-            }
-            System.out.println("Réseau lu "+nb+" :\n"+model+"\n\n");
-            // Calcul de la première solution
-            if(model.getSolver().solve()) {
-                System.out.println("\n\n*** Première solution ***");
-                System.out.println(model);
-                resSol.put(ficName,resSol.get(ficName)+1);
-            }
+        } catch (IOException e) {
+            System.err.println("Erreur lors de la lecture du répertoire : " + e.getMessage());
         }
 		return;	
 	}
-	
 }
