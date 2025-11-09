@@ -5,11 +5,6 @@
 #include <arpa/inet.h>
 #include <string.h>
 
-
-
-
-
-
 int main(int argc, char* argv[]){//Premier arg: port, 2e arg: nb PI
 
 if (argc!=3){
@@ -21,8 +16,6 @@ if (argc!=3){
 int port = atoi(argv[1]);
 int nbPi = atoi(argv[2]);
 struct sockaddr_in PIaddresses[nbPi];
-
-
 
 //Init server------------
 

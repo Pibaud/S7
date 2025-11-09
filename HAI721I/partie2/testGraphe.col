@@ -1,9 +1,12 @@
 c FILE: testGraphe
 c
-c SOURCE: Elouand Portes
+c SOURCE: Thibaud Paulin
 c
 c DESCRIPTION: Graphe
-
-p edge 4 12
+c
+p edge 5 5
 e 2 1
-=
+e 3 1
+e 3 2
+e 5 2
+e 5 4

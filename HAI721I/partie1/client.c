@@ -125,11 +125,5 @@ while (1){
 }
 printf("%d\n",envoi.count);
 
-
-
-
-
-
-
 close(sockClient);
 }
