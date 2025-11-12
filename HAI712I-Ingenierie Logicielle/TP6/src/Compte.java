@@ -1,4 +1,4 @@
-public class Compte {
+public class Compte extends AbstractCompte{
     private Client client;
 
     public Compte(Client client) {
