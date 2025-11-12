@@ -13,7 +13,7 @@ int main(int argc, char* argv[]){
     
     int index = atoi(argv[1]);
     int targetPort = atoi(argv[2]);
-    int clientPort = 5000 + (index % 1000); // Plage de ports entre 5000 et 6000
+    int clientPort = 5000 + (index % 50000); // Plage de ports entre 5000 et 6000
     char* targetIp = argv[3];
 
 //Signaler existence au serveur------------
@@ -22,7 +22,6 @@ struct sockaddr_in servAddr;
 servAddr.sin_family = AF_INET;
 if (-1==inet_pton(AF_INET,targetIp,&servAddr.sin_addr)){perror("Inet pton a crash");exit(EXIT_FAILURE);}
 servAddr.sin_port = htons(targetPort);
-
 
 int sockClient = socket(AF_INET, SOCK_DGRAM, 0);
 if (sockClient == -1) {
@@ -34,7 +33,6 @@ struct sockaddr_in addrClient;
 addrClient.sin_family = AF_INET;
 addrClient.sin_addr.s_addr = INADDR_ANY; // listen on all interfaces
 addrClient.sin_port = htons(clientPort);
-
 
 if (bind(sockClient,(struct sockaddr*) &addrClient,sizeof(addrClient))==-1){
     perror("bind client crash\n");
@@ -59,7 +57,6 @@ if (bytesReceived == -1) {
     exit(EXIT_FAILURE);
 }
 
-// Dans client.c, après recvfrom
 if (bytesReceived != buffer_len) {
     printf("Erreur : Taille des données reçues (%d) différente de la taille attendue (%u).\n", bytesReceived, (unsigned int)buffer_len);
     // Tu devrais quitter ou gérer cette erreur ici
@@ -79,7 +76,7 @@ close(sockClient); //fermer la connexion UDP serveur
 int sockAcceptation = socket(AF_INET,SOCK_STREAM,0);
 struct sockaddr_in addrAcceptation;
 addrAcceptation.sin_family = AF_INET;
-addrAcceptation.sin_addr.s_addr = INADDR_ANY; // listen on all interfaces
+addrAcceptation.sin_addr.s_addr = INADDR_ANY;
 addrAcceptation.sin_port = htons(clientPort);
 
 if (bind(sockAcceptation,(struct sockaddr*) &addrAcceptation,sizeof(addrAcceptation))==-1){
@@ -121,7 +118,7 @@ listen(sockAcceptation,nbVoisinsPlusGrands);
 for (int i=0;i<nbVoisinsPlusGrands;i++){
     if (adressesVoisins[voisinsPlusGrands[i]].sin_port > clientPort){
         int sockVoisin = accept(sockAcceptation,NULL,NULL);
-        printf("Connexion acceptée d'un voisin\n");
+        printf("Connexion acceptée du voisin %d\n", ntohs(adressesVoisins[voisinsPlusGrands[i]].sin_port));
     }else{
         printf("adressesVoisins[voisinsPlusGrands[i]].sin_port < clientPort : %d < %d\n", ntohs(adressesVoisins[voisinsPlusGrands[i]].sin_port), clientPort);
     }

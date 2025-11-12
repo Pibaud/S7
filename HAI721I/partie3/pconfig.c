@@ -7,8 +7,8 @@
 
 int main(int argc, char* argv[]){
 
-if (argc!=3){
-     printf("Signature correcte: %s <portServeur> <fichier texte>\n",argv[0]);
+if (argc!=4){
+     printf("Signature correcte: %s <portServeur> <fichier texte> <piSource>\n",argv[0]);
     exit(EXIT_FAILURE);
 }
 
@@ -22,6 +22,7 @@ int nbPi;
 int nbAretes;
 int *arites;
 int noeudA, noeudB;
+int piSource = atoi(argv[3]);
 
 //première boucle pour connaitre les arites et nbPi
 if (fichier != NULL) {
@@ -127,8 +128,9 @@ if (commandsFile == NULL) {
 for (int i = 0; i < nbPi; i++) {
     int nbVoisins = arites[i];
     int portTCP = 5000 + (i+1 % 1000);
-
-    fprintf(commandsFile, "./client %d %d 127.0.0.1 %d %d\n", i+1, portServeur, portTCP, nbVoisins);
+    int intervalle = 3;
+    int isSource = (i+1 == piSource) ? 1 : 0; // Le premier noeud est la source
+    fprintf(commandsFile, "./client %d %d 127.0.0.1 %d %d %d %d\n", i+1, portServeur, portTCP, nbVoisins, intervalle, isSource);
 }
 
 fclose(commandsFile);
