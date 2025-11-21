@@ -9,6 +9,7 @@
 //struct message avec un champ char[256] et un entier
 struct M {
     char texte[256];
+    int* HV;
     int i;
 };
 
@@ -21,6 +22,7 @@ struct MessageNode {
 // Structure pour regrouper les paramètres nécessaires aux threads
 struct ThreadParams {
     int sockAcceptation;
+    int* HV;
     fd_set* ensemble;
     fd_set* ensemble_initial;
     int* max;
@@ -75,6 +77,15 @@ void* thread_input(void* arg) {
                     } else {
                         //véifier si le message a déjà été reçu dans la liste chainée
                         printf("Message reçu : %s, i = %d\n", messageRecu.texte, messageRecu.i);
+                        //incrémenter l'horloge vectorielle locale à la réception
+                        HV[params->index]++;
+                        // pour tout j!=params->index, mettre à jour l'horloge vectorielle locale
+                        for(int j=0; j<params->nbVoisins; j++){
+                            //max entre chaque HV[j] et messageRecu.HV[j]
+                            if(HV[j] < messageRecu.HV[j]){
+                                HV[j] = messageRecu.HV[j];
+                            }
+                        }
                         // vérifier dans la liste chainée
                         struct MessageNode* current = params->premierNoeud;
                         int dejaRecu = 0;
@@ -85,6 +96,9 @@ void* thread_input(void* arg) {
                             }
                             current = current->next;
                         }
+                        // VERIFIER LE BON ORDRE DU MESSAGE
+                        // dans notre liste chainee de message reçus, regarder les horloges vectorielles
+                        // si le message qu'on recoit était censé arriver avant le message qu'on a déjà, réarranger la liste chainée
                         if (dejaRecu == 0) {// nouveau message, l'ajouter à la liste chainée
                             printf("Nouveau message, ajout à la liste chainée\n");
                             struct MessageNode* newNode = malloc(sizeof(struct MessageNode));
@@ -100,7 +114,12 @@ void* thread_input(void* arg) {
                             //itérer dans les fd_set des voisins, envoyer qu'aux voisins qui ne sont pas l'émetteur
                             for(int j=3; j<=*(params->max); j++) {
                                 if(FD_ISSET(j, params->ensemble_initial) && j != sockAcceptation && j != i) {
+                                    // incrémenter l'horloge vectorielle locale avant d'envoyer
+                                    HV[params->index]++;
+                                    //estampiller l'horloge vectorielle dans le message
+                                    messageRecu.HV = HV;
                                     send(j, &messageRecu, sizeof(struct M), 0);
+                                    
                                     printf("Message retransmis au socket %d : %s, i = %d\n", j, messageRecu.texte, messageRecu.i);
                                 }
                             }
@@ -147,12 +166,16 @@ void* thread_output(void* arg) {
     if(params->isSource == 1){ // si c'est la source
         while(1){
             struct M message;
-            snprintf(message.texte, sizeof(message.texte), "Message de diffusion initiale");
+            snprintf(message.texte, sizeof(message.texte), "Message de diffusion initial");
             message.i = params->index;
             //envoyer le message à tous les voisins
             pthread_mutex_lock(params->mutex_ensemble);
             for(int j=3; j<=*(params->max); j++) {
                 if(FD_ISSET(j, params->ensemble_initial) && j != params->sockAcceptation) {
+                    // incrémenter l'horloge vectorielle locale avant d'envoyer
+                    HV[params->index]++;
+                    //estampiller l'horloge vectorielle dans le message
+                    message.HV = HV;
                     send(j, &message, sizeof(struct M), 0);
                     printf("Message initial envoyé au socket %d : %s, i = %d\n", j, message.texte, message.i);
                 }
@@ -165,8 +188,10 @@ void* thread_output(void* arg) {
 }
 
 int main(int argc, char* argv[]){
-    if (argc!=8){
-        printf("Signature correcte: %s <index> <port> <ip> <portTCP> <nbVoisins> <intervalle> <isSource>\n",argv[0]);
+    int* HV; // liste des horloges vectorielles de tous les sites
+
+    if (argc!=9){
+        printf("Signature correcte: %s <index> <port> <ip> <portTCP> <nbVoisins> <intervalle> <isSource> <nbPi>\n",argv[0]);
         exit(EXIT_FAILURE);
     }
     
@@ -178,6 +203,10 @@ int main(int argc, char* argv[]){
     int clientPort = 5000 + (index % 50000); // Plage de ports entre 5000 et 6000
     int intervalle = atoi(argv[6]);
     int isSource = atoi(argv[7]);
+    int nbPi = atoi(argv[8]);
+
+    //initialiser les horloges vectorielles avec nbPi éléments à 0
+    HV = calloc(sizeof(int)*nbPi);
 
     //Signaler existence au serveur------------
 
