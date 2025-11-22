@@ -130,7 +130,7 @@ for (int i = 0; i < nbPi; i++) {
     int portTCP = 5000 + (i+1 % 1000);
     int intervalle = 3;
     int isSource = (i+1 == piSource) ? 1 : 0; // Le premier noeud est la source
-    fprintf(commandsFile, "./client %d %d 127.0.0.1 %d %d %d %d\n", i+1, portServeur, portTCP, nbVoisins, intervalle, isSource);
+    fprintf(commandsFile, "./client %d %d 127.0.0.1 %d %d %d %d %d\n", i+1, portServeur, portTCP, nbVoisins, intervalle, isSource, nbPi);
 }
 
 fclose(commandsFile);

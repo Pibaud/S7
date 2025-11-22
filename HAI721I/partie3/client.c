@@ -4,12 +4,15 @@
 #include <unistd.h>
 #include <arpa/inet.h>
 #include <string.h>
+#include <errno.h>
 #include <pthread.h>
+
+#define NB_SITES_MAX 10
 
 //struct message avec un champ char[256] et un entier
 struct M {
     char texte[256];
-    int* HV;
+    int HV[NB_SITES_MAX];
     int i;
 };
 
@@ -27,6 +30,7 @@ struct ThreadParams {
     fd_set* ensemble_initial;
     int* max;
     int nbVoisins;
+    int nbPi;
     int clientPort;
     int isSource;
     int intervalle;
@@ -36,99 +40,151 @@ struct ThreadParams {
     int index; // Ajout du champ index
 };
 
+void afficherHV(const char* prefixe, int* HV, int nbPi) {
+    printf("%s [", prefixe);
+    for (int i = 0; i < nbPi; i++) {
+        printf("%d", HV[i]);
+        if (i < nbPi - 1) {
+            printf(", ");
+        }
+    }
+    printf("]\n");
+}
+
 void* thread_input(void* arg) {
     printf("Thread input démarré...\n");
     struct ThreadParams* params = (struct ThreadParams*)arg;
     int sockAcceptation = params->sockAcceptation;
     struct sockaddr_in clientAddr;
     socklen_t addrLen = sizeof(clientAddr);
+    fd_set lecture;
+
+    // Ecoute
     listen(sockAcceptation, params->nbVoisins);
 
     while (1) {
-        // Protéger l'accès à ensemble_initial avec un mutex
+        // 1. REINITIALISER le set de lecture
         pthread_mutex_lock(params->mutex_ensemble);
-        select(*(params->max) + 1, params->ensemble, NULL, NULL, NULL);
+        lecture = *(params->ensemble_initial); 
         pthread_mutex_unlock(params->mutex_ensemble);
 
-        if (FD_ISSET(sockAcceptation, params->ensemble)) {
-            //boucler dans le set pour voir quelle socket est prête
-            for(int i=3; i<=*(params->max); i++) {
-                if(i == sockAcceptation) { // c'est la socket d'acceptation, on accepte la connexion
-                    int newSock = accept(sockAcceptation, (struct sockaddr*)&clientAddr, &addrLen);
-                    if (newSock == -1) {
-                        perror("Erreur lors de l'acceptation d'une connexion");
-                        continue;
-                    }
-                    printf("Nouvelle connexion acceptée de : %s:%d\n", inet_ntoa(clientAddr.sin_addr), ntohs(clientAddr.sin_port));
-                    //ajouter le newSock au fd_set
+        // 2. SELECT
+        int activite = select(*(params->max) + 1, &lecture, NULL, NULL, NULL);
+        if (activite < 0 && errno != EINTR) { perror("Select"); continue; }
+
+        // 3. GESTION ACCEPTATION (Nouveaux voisins)
+        if (FD_ISSET(sockAcceptation, &lecture)) {
+            int newSock = accept(sockAcceptation, (struct sockaddr*)&clientAddr, &addrLen);
+            if (newSock != -1) {
+                printf("Connexion : %s:%d\n", inet_ntoa(clientAddr.sin_addr), ntohs(clientAddr.sin_port));
+                pthread_mutex_lock(params->mutex_ensemble);
+                FD_SET(newSock, params->ensemble_initial);
+                if (*(params->max) < newSock ) *(params->max) = newSock;
+                pthread_mutex_unlock(params->mutex_ensemble);
+            }
+        }
+
+        // 4. GESTION MESSAGES (Voisins existants)
+        for(int i=3; i<=*(params->max); i++) {
+            if(i != sockAcceptation && FD_ISSET(i, &lecture)) {
+                
+                struct M messageRecu;
+                int bytesReceived = recv(i, &messageRecu, sizeof(struct M), 0);
+                
+                if (bytesReceived <= 0) {
+                    close(i);
                     pthread_mutex_lock(params->mutex_ensemble);
-                    FD_SET(newSock, params->ensemble_initial);
-                    if (*(params->max) < newSock ) *(params->max) = newSock;
+                    FD_CLR(i, params->ensemble_initial);
                     pthread_mutex_unlock(params->mutex_ensemble);
-                }
-                else{ // c'est une socket de client, on gère la réception des messages
-                    struct M messageRecu;
-                    int bytesReceived = recv(i, &messageRecu, sizeof(struct M), 0);
-                    if (bytesReceived <= 0) {
-                            // erreur ou connexion fermée
-                        printf("Connexion fermée ou erreur sur le socket %d\n", i);
-                        close(i);
-                        FD_CLR(i, params->ensemble_initial);
-                    } else {
-                        //véifier si le message a déjà été reçu dans la liste chainée
-                        printf("Message reçu : %s, i = %d\n", messageRecu.texte, messageRecu.i);
-                        //incrémenter l'horloge vectorielle locale à la réception
-                        HV[params->index]++;
-                        // pour tout j!=params->index, mettre à jour l'horloge vectorielle locale
-                        for(int j=0; j<params->nbVoisins; j++){
-                            //max entre chaque HV[j] et messageRecu.HV[j]
-                            if(HV[j] < messageRecu.HV[j]){
-                                HV[j] = messageRecu.HV[j];
+                } else {
+                    int dejaRecu = 0;
+                    struct MessageNode* current = params->premierNoeud;
+                    while (current != NULL) {
+                        // Un message est un doublon si MEME emetteur ET MEME horloge
+                        if (current->message.i == messageRecu.i && 
+                            memcmp(current->message.HV, messageRecu.HV, params->nbPi * sizeof(int)) == 0) {
+                            dejaRecu = 1;
+                            break;
+                        }
+                        current = current->next;
+                    }
+
+                    if (!dejaRecu) {
+                        printf("--> Réception brute de %d (HV notée)\n", messageRecu.i);
+                        
+                        // Stockage dans la liste (Buffer)
+                        struct MessageNode* newNode = malloc(sizeof(struct MessageNode));
+                        newNode->message = messageRecu;
+                        newNode->next = params->premierNoeud;
+                        params->premierNoeud = newNode;
+
+                        pthread_mutex_lock(params->mutex_ensemble);
+                        for(int j=3; j<=*(params->max); j++) {
+                            if(FD_ISSET(j, params->ensemble_initial) && j != sockAcceptation && j != i) {
+                                send(j, &messageRecu, sizeof(struct M), 0);
                             }
                         }
-                        // vérifier dans la liste chainée
-                        struct MessageNode* current = params->premierNoeud;
-                        int dejaRecu = 0;
-                        while (current != NULL) {
-                            if (current->message.i == messageRecu.i) {
-                                dejaRecu = 1;
-                                break;
-                            }
-                            current = current->next;
-                        }
-                        // VERIFIER LE BON ORDRE DU MESSAGE
-                        // dans notre liste chainee de message reçus, regarder les horloges vectorielles
-                        // si le message qu'on recoit était censé arriver avant le message qu'on a déjà, réarranger la liste chainée
-                        if (dejaRecu == 0) {// nouveau message, l'ajouter à la liste chainée
-                            printf("Nouveau message, ajout à la liste chainée\n");
-                            struct MessageNode* newNode = malloc(sizeof(struct MessageNode));
-                            if (newNode == NULL) {
-                                perror("malloc");
-                                exit(EXIT_FAILURE);
-                            }
-                            newNode->message = messageRecu;
-                            newNode->next = params->premierNoeud;
-                            params->premierNoeud = newNode;
-                            // diffuser le message aux voisins
-                            
-                            //itérer dans les fd_set des voisins, envoyer qu'aux voisins qui ne sont pas l'émetteur
-                            for(int j=3; j<=*(params->max); j++) {
-                                if(FD_ISSET(j, params->ensemble_initial) && j != sockAcceptation && j != i) {
-                                    // incrémenter l'horloge vectorielle locale avant d'envoyer
-                                    HV[params->index]++;
-                                    //estampiller l'horloge vectorielle dans le message
-                                    messageRecu.HV = HV;
-                                    send(j, &messageRecu, sizeof(struct M), 0);
+                        pthread_mutex_unlock(params->mutex_ensemble);
+
+                        // --- ETAPE C : Tentative de Délivrance Causale ---
+                        // On parcourt la liste pour voir si des messages peuvent être "lus" (délivrés)
+                        // Condition de délivrance (Causalité) :
+                        // 1. W[emetteur] == Local[emetteur] + 1
+                        // 2. W[k] <= Local[k] (pour tout autre k)
+                        
+                        int progres = 1;
+                        while(progres) {
+                            progres = 0;
+                            struct MessageNode** scan = &params->premierNoeud;
+                            while(*scan != NULL) {
+                                struct M* m = &((*scan)->message);
+                                int emetteur = m->i; // Index de l'émetteur du message
+                                
+                                // Vérification de la condition causale
+                                int livrable = 1;
+                                if (m->HV[emetteur-1] != params->HV[emetteur-1] + 1) {
+                                    livrable = 0; // Pas le prochain attendu de cet émetteur
+                                } else {
+                                    for (int k = 0; k < params->nbPi; k++) {
+                                        if (k != emetteur-1 && m->HV[k] > params->HV[k]) {
+                                            livrable = 0; // Il a vu des messages que je n'ai pas encore vus
+                                            break;
+                                        }
+                                    }
+                                }
+
+                                if (livrable) {
+                                    // --- DELIVRANCE OFFICIELLE ---
+                                    printf("+++ DELIVRANCE du message de %d : %s\n", emetteur, m->texte);
+                                    afficherHV("Etat avant MAJ", params->HV, params->nbPi);
                                     
-                                    printf("Message retransmis au socket %d : %s, i = %d\n", j, messageRecu.texte, messageRecu.i);
+                                    // Mise à jour de l'horloge locale
+                                    for(int k=0; k<params->nbPi; k++) {
+                                        if (m->HV[k] > params->HV[k]) params->HV[k] = m->HV[k];
+                                    }
+                                    params->HV[params->index-1]++; // On incrémente notre propre horloge pour l'acte de délivrance? (Optionnel selon variante)
+                                    
+                                    afficherHV("Etat après MAJ", params->HV, params->nbPi);
+
+                                    // Retirer le message de la liste (ou le marquer comme traité)
+                                    // Ici, on le retire simplement pour simplifier
+                                    struct MessageNode* toFree = *scan;
+                                    *scan = (*scan)->next;
+                                    free(toFree);
+                                    
+                                    progres = 1; // On a avancé, on recommence le scan car cela a pu débloquer d'autres messages
+                                } else {
+                                    scan = &((*scan)->next);
                                 }
                             }
                         }
+                    } else {
+                        // Message déjà vu, on l'ignore (on ne retransmet pas pour éviter les boucles infinies, 
+                        // car nos voisins l'ont probablement déjà eu ou vont l'avoir via d'autres chemins)
                     }
                 }
             }
         }
-        params->ensemble = params->ensemble_initial;
     }
     return NULL;
 }
@@ -149,17 +205,30 @@ void* thread_output(void* arg) {
         }
         if(ntohs(adressesVoisins[i].sin_port) < params->clientPort){
             int sockVoisin = socket(AF_INET,SOCK_STREAM,0);
-            if (connect(sockVoisin, (struct sockaddr*)&adressesVoisins[i], sizeof(struct sockaddr_in)) == -1) {
-                perror("connect crash\n");
+            int connected = 0;
+            int tentatives = 0;
+            while (!connected && tentatives < 10) { // On essaie pendant 10 secondes max
+                if (connect(sockVoisin, (struct sockaddr*)&adressesVoisins[i], sizeof(struct sockaddr_in)) == -1) {
+                    printf("Tentative de connexion au voisin %d échouée (pas encore prêt ?). Nouvelle tentative dans 1s...\n", i);
+                    sleep(1); // Attendre 1 seconde avant de retenter
+                    tentatives++;
+                } else {
+                    connected = 1;
+                }
+            }
+
+            if (!connected) {
+                perror("Abandon après 10 tentatives. Connect crash");
                 exit(EXIT_FAILURE);
             }
             //mettre à jour le fd_set
             pthread_mutex_lock(params->mutex_ensemble); // Protéger l'accès à ensemble_initial
             FD_SET(sockVoisin, params->ensemble_initial);
+            if (*(params->max) < sockVoisin) {
+                *(params->max) = sockVoisin;
+            }
             pthread_mutex_unlock(params->mutex_ensemble); // Déverrouiller après modification
-            printf("Connexion établie avec le voisin : %s:%d\n",
-           inet_ntoa(adressesVoisins[i].sin_addr),
-           ntohs(adressesVoisins[i].sin_port));
+            printf("Connexion établie avec le voisin : %s:%d\n",inet_ntoa(adressesVoisins[i].sin_addr),ntohs(adressesVoisins[i].sin_port));
         }   
     }
     // on laisse allumé le thread pour la source, pour envoyer le premier message de diffusion
@@ -172,12 +241,15 @@ void* thread_output(void* arg) {
             pthread_mutex_lock(params->mutex_ensemble);
             for(int j=3; j<=*(params->max); j++) {
                 if(FD_ISSET(j, params->ensemble_initial) && j != params->sockAcceptation) {
-                    // incrémenter l'horloge vectorielle locale avant d'envoyer
-                    HV[params->index]++;
+                    // incrémenter l'horloge vectorielle (le int* HV dans les args) locale avant d'envoyer
+                    params->HV[params->index-1]++;
                     //estampiller l'horloge vectorielle dans le message
-                    message.HV = HV;
+                    memcpy(message.HV, params->HV, params->nbPi * sizeof(int));
                     send(j, &message, sizeof(struct M), 0);
-                    printf("Message initial envoyé au socket %d : %s, i = %d\n", j, message.texte, message.i);
+
+                    char debugMsg[100];
+                    sprintf(debugMsg, "--> Envoi initial vers %d (mon horloge)", j);
+                    afficherHV(debugMsg, params->HV, params->nbPi);
                 }
             }
             pthread_mutex_unlock(params->mutex_ensemble);
@@ -206,7 +278,7 @@ int main(int argc, char* argv[]){
     int nbPi = atoi(argv[8]);
 
     //initialiser les horloges vectorielles avec nbPi éléments à 0
-    HV = calloc(sizeof(int)*nbPi);
+    HV = calloc(nbPi, sizeof(int));
 
     //Signaler existence au serveur------------
 
@@ -266,6 +338,12 @@ int main(int argc, char* argv[]){
     //Connexions TCP avec mes voisins
 
     int sockAcceptation = socket(AF_INET,SOCK_STREAM,0);
+
+    int opt = 1;
+    if (setsockopt(sockAcceptation, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)) < 0) {
+    perror("setsockopt");
+    }
+
     struct sockaddr_in addrAcceptation;
     addrAcceptation.sin_family = AF_INET;
     addrAcceptation.sin_addr.s_addr = INADDR_ANY;
@@ -325,6 +403,8 @@ int main(int argc, char* argv[]){
     params.ensemble_initial = &ensemble_initial;
     params.max = &max;
     params.nbVoisins = nbVoisins;
+    params.nbPi = nbPi;
+    params.HV = HV;
     params.clientPort = clientPort;
     params.isSource = isSource;
     params.intervalle = intervalle;
@@ -343,5 +423,12 @@ int main(int argc, char* argv[]){
     pthread_create(&thread_input_id, NULL, thread_input, (void*)&params);
     pthread_create(&thread_output_id, NULL, thread_output, (void*)&params);
 
+    pthread_join(thread_input_id, NULL);
+    pthread_join(thread_output_id, NULL);
+
+    free(socketsVoisins);
+    free(HV);
     close(sockAcceptation);
+
+    return 0;
 }
