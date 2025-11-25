@@ -1,0 +1,34 @@
+Question 1.
+Qu’apporte la solution logicielle d´ecrite par le sch´ema MVC ? Quels sont ses avantages principaux ?
+
+MVC permet :
+- de découpler les traitements métiers de l'affichage
+- de découpler le contrôle (souris, clavier) de l'affichage
+- d'avoir plusieurs vues (simultanées) sur un même objet ou changer facilement de vue.
+
+Question 2.
+Explicitez en quoi le sch´ema Observateur a un rapport avec le sch´ema MVC. Lequel utilise lequel ?
+
+MVC utilise Observer. On pourrait dire que le model est l'observé
+
+Question 3.
+Parmi les classes qui vous ont été fournies, lesquelles r´ealisent un framework permettant d’implanter
+une architecture de type MVC ?
+
+
+
+Question 4. A quoi sert la classe MV Association ? Pourquoi ne pas avoir un attribut de type
+List<Vue> dans la classe Model ?
+
+On ne veut pas stocker tous les observateurs dans une liste de l'observé. On va donc se servir d'un dico (c'est le rôle
+de la classe MV_Association) à part car l'observé n'a jamais besoin de connaître ses observateurs
+
+Question 5. Un mod`ele (du MVC) est-il un observ´e ou un observateur (selon le sch´ema Observer) ?
+
+Un modèle est un observé
+
+Question 6.
+Dans cette implantation de MVC, le patron Observateur est utilis´e deux fois de deux fa¸cons diff´erentes.
+Explicitez lesquelles.
+
+On écoute les I/O donc l'autre observé pourrait être l'ActionListener
