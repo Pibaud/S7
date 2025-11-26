@@ -1,21 +1,25 @@
 public class Bidon {
     private int capacite;
     private int litresContenus;
+    private int index;
 
     public Bidon(int capacite) {
         this.capacite = capacite;
         this.litresContenus = 0;
     }
 
-    public void remplir(int litresAjoutes){
+    public int remplir(int litresAjoutes){
         this.litresContenus += litresAjoutes;
+        return litresAjoutes;
     }
 
-    public void vider(){
+    public int vider(){
+        int volumeInitial = this.litresContenus;
         this.litresContenus = 0;
+        return volumeInitial;
     }
 
-    public void transvaserVers(Bidon autreBidon){
+    public int transvaserVers(Bidon autreBidon){
         int volNecessaire = autreBidon.getCapacite() - autreBidon.getLitresContenus();
         if(volNecessaire >= this.litresContenus){
             autreBidon.remplir(this.litresContenus);
@@ -25,6 +29,7 @@ public class Bidon {
             autreBidon.remplir(volNecessaire);
             this.litresContenus -= volNecessaire;
         }
+        return volNecessaire;
     }
 
     public int getCapacite() {
@@ -34,4 +39,6 @@ public class Bidon {
     public int getLitresContenus() {
         return litresContenus;
     }
+
+    public int getIndex() {return index;}
 }

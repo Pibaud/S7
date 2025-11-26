@@ -2,8 +2,8 @@ public class Main {
     public static void main(String[] args) {
         int[] capacitesBidons = {200, 100, 50};
 
-        Bidon b1 = new Bidon(200);
+        Partie p1 = new Partie(3, capacitesBidons, 150);
 
-        AbstractCommande remplirb1 = new Remplir(b1);
+        p1.jouer();
     }
 }

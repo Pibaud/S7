@@ -5,7 +5,7 @@ public class Partie{
     int[] capacitesBidons;
     int volumeCible;
     ArrayList<Bidon> bidons = new ArrayList<Bidon>();
-    ArrayList<AbstractCommande> historique;
+    ArrayList<AbstractCommande> historique = new  ArrayList<AbstractCommande>();
 
     public Partie(int nbBidons,  int[] capacitesBidons,  int volumeCible) {
         this.nbBidons = nbBidons;
@@ -16,11 +16,12 @@ public class Partie{
         }
     }
 
-    public int getNbBidons() {
-        return nbBidons;
-    }
-
-    public int[] getCapacitesBidons() {
-        return capacitesBidons;
+    public void jouer(){
+        Bidon b1 = new Bidon(200);
+        AbstractCommande remplirb1 = new CommandeRemplir(b1, 100);
+        remplirb1.faire();
+        historique.add(remplirb1);
+        remplirb1.defaire();
+        historique.removeLast();
     }
 }

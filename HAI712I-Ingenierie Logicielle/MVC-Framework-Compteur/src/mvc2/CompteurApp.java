@@ -20,7 +20,7 @@ public class CompteurApp {
     }
 
     public void initMVC() {
-        model = Compteur.getInstance1();é&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&
+        model = Compteur.getInstance1();
         controller1 = new CompteurController(model);
         controller2 = new CompteurController(model);
         view1 = new CompteurView1(model, controller1);
