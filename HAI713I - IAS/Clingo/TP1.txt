@@ -127,4 +127,18 @@ ancetre(X,Y) :- parent(X,Y).
 ancetre(X,Z) :- parent(X,Y), ancetre(Y,Z).
 ancetre_oedipe(X,oedipe) :- ancetre(X,oedipe).
 
-#show ancetre_oedipe/2.
+ancetreCommun(Z,X,Y) :- ancetre(Z,X), ancetre(Z,Y), X!=Y.
+
+%X est un descendant de ...
+
+descendant(X,Y) :- aEnfant(Y,X).
+
+descendant(X,Z) :- aEnfant(Y,X), descendant(Y, Z).
+
+%Z est un plus proche ancêtre commun à X
+%et Y, c'est-à-dire qu'aucun descendant de Z n'est un ancêtre commun à X et Y. 
+
+plusProcheAncetreCommun(Z, X, Y) :- ancetreCommun(U,X,Y), descendant(U,Z), not ancetreCommun(Z,X,Y).
+plusProcheAncetreCommunOclasosOedipe(Z, menecee, laios) :- plusProcheAncetreCommun(Z, menecee, laios).
+
+#show plusProcheAncetreCommunOclasosOedipe/3.
